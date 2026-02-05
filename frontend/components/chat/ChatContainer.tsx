@@ -109,7 +109,7 @@ export default function ChatContainer() {
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              <p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
               <p className="text-xs mt-1 opacity-70">
                 {new Date(message.created_at).toLocaleTimeString()}
               </p>
