@@ -1,0 +1,488 @@
+openapi: 3.0.3
+info:
+  title: Task Management REST API
+  description: |
+    REST API for task management with user ownership enforcement.
+
+    **SPEC 1 (Pre-Authentication)**: This API uses user_id in the URL path for ownership scoping.
+    JWT authentication will be added in SPEC 2.
+
+    **Key Features**:
+    - Full CRUD operations for tasks
+    - User ownership enforcement (all queries scoped by user_id)
+    - Persistent storage in Neon Serverless PostgreSQL
+    - Automatic timestamps (created_at, updated_at)
+    - Input validation with clear error messages
+
+    **Base URL**: `http://localhost:8000` (development)
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server (future)
+
+tags:
+  - name: tasks
+    description: Task CRUD operations
+
+paths:
+  /api/{user_id}/tasks:
+    get:
+      tags:
+        - tasks
+      summary: List all tasks for a user
+      description: Retrieves all tasks belonging to the specified user. Returns an empty array if the user has no tasks.
+      operationId: listUserTasks
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+      responses:
+        '200':
+          description: Successfully retrieved tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+              examples:
+                with_tasks:
+                  summary: User with tasks
+                  value:
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      user_id: "user123"
+                      title: "Complete project documentation"
+                      description: "Write comprehensive API documentation"
+                      completed: false
+                      created_at: "2026-01-22T10:00:00Z"
+                      updated_at: "2026-01-22T10:00:00Z"
+                    - id: "550e8400-e29b-41d4-a716-446655440001"
+                      user_id: "user123"
+                      title: "Review pull requests"
+                      description: null
+                      completed: true
+                      created_at: "2026-01-22T09:00:00Z"
+                      updated_at: "2026-01-22T11:00:00Z"
+                no_tasks:
+                  summary: User with no tasks
+                  value: []
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - tasks
+      summary: Create a new task
+      description: Creates a new task for the specified user. The task is automatically assigned to the user from the URL path.
+      operationId: createTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            examples:
+              with_description:
+                summary: Task with description
+                value:
+                  title: "Complete project documentation"
+                  description: "Write comprehensive API documentation"
+              without_description:
+                summary: Task without description
+                value:
+                  title: "Review pull requests"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                user_id: "user123"
+                title: "Complete project documentation"
+                description: "Write comprehensive API documentation"
+                completed: false
+                created_at: "2026-01-22T10:00:00Z"
+                updated_at: "2026-01-22T10:00:00Z"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                detail:
+                  - loc: ["body", "title"]
+                    msg: "field required"
+                    type: "value_error.missing"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/{user_id}/tasks/{task_id}:
+    get:
+      tags:
+        - tasks
+      summary: Get a specific task
+      description: Retrieves details of a specific task. Returns 404 if the task doesn't exist or doesn't belong to the user.
+      operationId: getTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Successfully retrieved task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                user_id: "user123"
+                title: "Complete project documentation"
+                description: "Write comprehensive API documentation"
+                completed: false
+                created_at: "2026-01-22T10:00:00Z"
+                updated_at: "2026-01-22T10:00:00Z"
+        '404':
+          description: Task not found or doesn't belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Task not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - tasks
+      summary: Update a task
+      description: Updates an existing task. Returns 404 if the task doesn't exist or doesn't belong to the user.
+      operationId: updateTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            example:
+              title: "Complete project documentation (updated)"
+              description: "Write comprehensive API documentation with examples"
+              completed: false
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                user_id: "user123"
+                title: "Complete project documentation (updated)"
+                description: "Write comprehensive API documentation with examples"
+                completed: false
+                created_at: "2026-01-22T10:00:00Z"
+                updated_at: "2026-01-22T12:00:00Z"
+        '404':
+          description: Task not found or doesn't belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Task not found"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - tasks
+      summary: Delete a task
+      description: Permanently deletes a task. Returns 404 if the task doesn't exist or doesn't belong to the user.
+      operationId: deleteTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Task deleted successfully"
+        '404':
+          description: Task not found or doesn't belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Task not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/{user_id}/tasks/{task_id}/complete:
+    patch:
+      tags:
+        - tasks
+      summary: Toggle task completion status
+      description: Toggles the completion status of a task (true ↔ false). Returns 404 if the task doesn't exist or doesn't belong to the user.
+      operationId: toggleTaskCompletion
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: task_id
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Task completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                user_id: "user123"
+                title: "Complete project documentation"
+                description: "Write comprehensive API documentation"
+                completed: true
+                created_at: "2026-01-22T10:00:00Z"
+                updated_at: "2026-01-22T13:00:00Z"
+        '404':
+          description: Task not found or doesn't belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Task not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Task title (required, 1-500 characters)
+          example: "Complete project documentation"
+        description:
+          type: string
+          maxLength: 5000
+          nullable: true
+          description: Optional task description (max 5000 characters)
+          example: "Write comprehensive API documentation"
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Updated task title (1-500 characters)
+          example: "Complete project documentation (updated)"
+        description:
+          type: string
+          maxLength: 5000
+          nullable: true
+          description: Updated task description (max 5000 characters)
+          example: "Write comprehensive API documentation with examples"
+        completed:
+          type: boolean
+          description: Updated completion status
+          example: false
+
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        user_id:
+          type: string
+          description: Task owner identifier
+          example: "user123"
+        title:
+          type: string
+          description: Task title
+          example: "Complete project documentation"
+        description:
+          type: string
+          nullable: true
+          description: Task description (optional)
+          example: "Write comprehensive API documentation"
+        completed:
+          type: boolean
+          description: Completion status
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (UTC)
+          example: "2026-01-22T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (UTC)
+          example: "2026-01-22T10:00:00Z"
+
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Task not found"
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+                description: Location of the error (e.g., ["body", "title"])
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type
+          example:
+            - loc: ["body", "title"]
+              msg: "field required"
+              type: "value_error.missing"

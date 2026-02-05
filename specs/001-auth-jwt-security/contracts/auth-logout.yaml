@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: User Logout API
+  description: Invalidate user session and JWT token
+  version: 1.0.0
+
+paths:
+  /api/auth/logout:
+    post:
+      summary: Logout user and invalidate session
+      description: |
+        Invalidates the current user session and clears the JWT token cookie.
+        Requires valid JWT token in Authorization header.
+      operationId: logoutUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful, session invalidated
+          headers:
+            Set-Cookie:
+              description: JWT token cookie cleared
+              schema:
+                type: string
+                example: better-auth-token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                    example: Logout successful
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_token:
+                  summary: Missing token
+                  value:
+                    detail: Authentication required
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+                invalid_token:
+                  summary: Invalid token
+                  value:
+                    detail: Invalid token
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+                expired_token:
+                  summary: Expired token
+                  value:
+                    detail: Token has expired
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Internal server error
+                error_code: INTERNAL_ERROR
+                status_code: 500
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token issued by Better Auth
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - detail
+        - error_code
+        - status_code
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+        error_code:
+          type: string
+          description: Machine-readable error code
+        status_code:
+          type: integer
+          description: HTTP status code

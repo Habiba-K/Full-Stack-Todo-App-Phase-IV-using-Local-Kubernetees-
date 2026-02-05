@@ -184,31 +184,38 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 My Tasks
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Manage and organize your daily tasks
               </p>
             </div>
             <div className="flex items-center gap-4">
+              {/* AI Chat Link */}
+              <a
+                href="/chat"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-blue-300 dark:border-blue-600"
+              >
+                💬 AI Assistant
+              </a>
               {/* User profile display */}
               <div className="hidden sm:block text-right">
                 {userName && (
-                  <p className="text-sm font-medium text-gray-900">{userName}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{userName}</p>
                 )}
-                <p className="text-xs text-gray-500">{userEmail}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{userEmail}</p>
               </div>
               {/* Logout button */}
               <button
                 onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors border border-gray-300"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
               >
                 Sign Out
               </button>
@@ -218,15 +225,16 @@ export default function DashboardPage() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Create task form */}
           <div className="lg:col-span-1">
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
-              <h2 className="text-lg font-semibold text-primary-900 mb-1">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 mb-4">
+              <h2 className="text-lg font-semibold text-primary-900 dark:text-primary-300 mb-1">
                 ✨ Create New Task
               </h2>
-              <p className="text-sm text-primary-700">
+              <p className="text-sm text-primary-700 dark:text-primary-400">
                 Add a new task to your list
               </p>
             </div>
@@ -234,8 +242,8 @@ export default function DashboardPage() {
               <TaskForm onSubmit={handleCreateTask} />
 
               {createSuccess && (
-                <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                  <p className="text-sm text-green-600">
+                <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <p className="text-sm text-green-600 dark:text-green-400">
                     ✓ Task created successfully!
                   </p>
                 </div>
@@ -246,8 +254,8 @@ export default function DashboardPage() {
           {/* Task list */}
           <div className="lg:col-span-2">
             {deleteSuccess && (
-              <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-sm text-green-600">
+              <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                <p className="text-sm text-green-600 dark:text-green-400">
                   ✓ Task deleted successfully!
                 </p>
               </div>
@@ -289,7 +297,8 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </main>
+      </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -303,6 +312,6 @@ export default function DashboardPage() {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
-    </div>
+    </>
   )
 }

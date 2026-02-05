@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: User Signin API
+  description: Authenticate user and issue JWT token
+  version: 1.0.0
+
+paths:
+  /api/auth/signin:
+    post:
+      summary: Authenticate user and issue JWT token
+      description: |
+        Validates user credentials and issues a JWT token on success.
+        Token is returned in response and stored in httpOnly cookie by Better Auth.
+      operationId: signinUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: user@example.com
+                password:
+                  type: string
+                  description: User's password
+                  example: SecurePass123!
+      responses:
+        '200':
+          description: Authentication successful, JWT token issued
+          headers:
+            Set-Cookie:
+              description: JWT token stored in httpOnly cookie
+              schema:
+                type: string
+                example: better-auth-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: User identifier
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      email:
+                        type: string
+                        format: email
+                        description: User's email address
+                        example: user@example.com
+                      name:
+                        type: string
+                        nullable: true
+                        description: User's display name
+                        example: John Doe
+                  token:
+                    type: string
+                    description: JWT access token
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYwMDAwMDAsImV4cCI6MTcwNjYwNDgwMH0.signature
+                  expires_at:
+                    type: string
+                    format: date-time
+                    description: Token expiration timestamp
+                    example: 2026-01-29T10:30:00Z
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Invalid email or password
+                error_code: UNAUTHORIZED
+                status_code: 401
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                detail:
+                  - loc: ["body", "email"]
+                    msg: Invalid email format
+                    type: value_error
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Internal server error
+                error_code: INTERNAL_ERROR
+                status_code: 500
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - detail
+        - error_code
+        - status_code
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+        error_code:
+          type: string
+          description: Machine-readable error code
+        status_code:
+          type: integer
+          description: HTTP status code
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+                description: Location of the error in the request
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type

@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  title: Get Current User API
+  description: Retrieve authenticated user information
+  version: 1.0.0
+
+paths:
+  /api/auth/me:
+    get:
+      summary: Get current authenticated user information
+      description: |
+        Returns information about the currently authenticated user.
+        Requires valid JWT token in Authorization header.
+      operationId: getCurrentUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: User identifier
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  email:
+                    type: string
+                    format: email
+                    description: User's email address
+                    example: user@example.com
+                  name:
+                    type: string
+                    nullable: true
+                    description: User's display name
+                    example: John Doe
+                  created_at:
+                    type: string
+                    format: date-time
+                    description: Account creation timestamp
+                    example: 2026-01-15T10:30:00Z
+                  updated_at:
+                    type: string
+                    format: date-time
+                    description: Last update timestamp
+                    example: 2026-01-22T10:30:00Z
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_token:
+                  summary: Missing token
+                  value:
+                    detail: Authentication required
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+                invalid_token:
+                  summary: Invalid token
+                  value:
+                    detail: Invalid token
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+                expired_token:
+                  summary: Expired token
+                  value:
+                    detail: Token has expired
+                    error_code: UNAUTHORIZED
+                    status_code: 401
+        '404':
+          description: User not found (token valid but user deleted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: User not found
+                error_code: NOT_FOUND
+                status_code: 404
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Internal server error
+                error_code: INTERNAL_ERROR
+                status_code: 500
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token issued by Better Auth
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - detail
+        - error_code
+        - status_code
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+        error_code:
+          type: string
+          description: Machine-readable error code
+        status_code:
+          type: integer
+          description: HTTP status code
