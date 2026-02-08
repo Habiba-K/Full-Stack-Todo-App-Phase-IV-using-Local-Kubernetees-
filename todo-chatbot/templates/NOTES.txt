@@ -1,0 +1,24 @@
+=====================================================
+  Todo Chatbot - Local Kubernetes Deployment
+=====================================================
+
+Your application has been deployed with:
+  - Frontend (Next.js): {{ include "todo-chatbot.frontend.fullname" . }}
+  - Backend  (FastAPI): {{ include "todo-chatbot.backend.fullname" . }}
+
+To access the application:
+
+1. Get the Minikube IP:
+   export MINIKUBE_IP=$(minikube ip)
+
+2. Access the services:
+   - Frontend: http://$MINIKUBE_IP:{{ .Values.frontend.service.nodePort }}
+   - Backend:  http://$MINIKUBE_IP:{{ .Values.backend.service.nodePort }}
+   - API Docs: http://$MINIKUBE_IP:{{ .Values.backend.service.nodePort }}/docs
+
+3. Or use minikube service to open in browser:
+   minikube service {{ include "todo-chatbot.frontend.fullname" . }}
+   minikube service {{ include "todo-chatbot.backend.fullname" . }}
+
+NOTE: Make sure your secrets (DATABASE_URL, BETTER_AUTH_SECRET, GROQ_API_KEY)
+are set in values.yaml or passed via --set flags during helm install.

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: todo-chatbot
+description: Todo Full-Stack App - Next.js Frontend + FastAPI Backend on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

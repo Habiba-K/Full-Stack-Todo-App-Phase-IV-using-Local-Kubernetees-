@@ -1,0 +1,93 @@
+# Todo Chatbot Helm Chart - Local Minikube Deployment
+# =====================================================
+
+replicaCount: 1
+
+# -- Frontend (Next.js)
+frontend:
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: Never  # Use local Minikube images
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30080
+  env:
+    # NEXT_PUBLIC_API_URL is baked at build time in Next.js, runtime value is for reference only
+    NEXT_PUBLIC_API_URL: "http://localhost:8000"
+    BETTER_AUTH_SECRET: "-_uK5taL1IvyxuJFdxOmBKjURX0CQVmrgkicloORt8Y"
+    NEXTAUTH_URL: "http://localhost:3000"
+    DATABASE_URL: "postgresql://neondb_owner:npg_ypXWDUo0q4cd@ep-misty-paper-ahr6etdt-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# -- Backend (FastAPI)
+backend:
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: Never  # Use local Minikube images
+  service:
+    type: NodePort
+    port: 8000
+    nodePort: 30081
+  env:
+    DATABASE_URL: "postgresql://neondb_owner:npg_ypXWDUo0q4cd@ep-misty-paper-ahr6etdt-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
+    BETTER_AUTH_SECRET: "-_uK5taL1IvyxuJFdxOmBKjURX0CQVmrgkicloORt8Y"
+    CORS_ORIGINS: "http://localhost:3000"
+    API_HOST: "0.0.0.0"
+    API_PORT: "8000"
+    DEBUG: "False"
+    LOG_LEVEL: "info"
+    GROQ_API_KEY: "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"
+    GROQ_MODEL: "llama-3.3-70b-versatile"
+    CHAT_CONTEXT_MESSAGES: "50"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# -- Service Account
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# -- Pod configuration
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+# -- Ingress (disabled for local, use NodePort instead)
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: todo.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# -- Autoscaling (disabled for local)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
